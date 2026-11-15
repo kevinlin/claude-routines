@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>dev.routines.status</string>
+  <!-- Expects the routine skill at ~/.claude/skills/routine. launchd does not expand ~ or $HOME, so sh does. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>exec /usr/bin/python3 "$HOME/.claude/skills/routine/scripts/status.py" --notify &gt;&gt; "$HOME/Library/Logs/routines-status.log" 2&gt;&amp;1</string>
+  </array>
+  <!-- Twice a day, independent of Claude: flags failed, stalled, overdue and waiting routines. -->
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>0</integer></dict>
+  </array>
+</dict>
+</plist>

@@ -1,0 +1,20 @@
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The system Python is used on purpose, because it is the one launchd runs.
+      - name: Python version
+        run: /usr/bin/python3 --version
+      - name: Unit tests
+        working-directory: skills/routine/scripts
+        run: /usr/bin/python3 -m unittest -v
+      - name: Lint launchd plist
+        run: plutil -lint skills/routine/launchd/dev.routines.status.plist
