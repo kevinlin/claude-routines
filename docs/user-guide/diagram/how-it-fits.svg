@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1130 710">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --bg-grid: #e2e8f0;
+      --mask: #f8fafc;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --arrow: #64748b;
+      --color-secondary-fill: rgba(5,150,105,0.12);
+      --color-secondary-stroke: #059669;
+      --color-tertiary-fill: rgba(124,58,237,0.12);
+      --color-tertiary-stroke: #7c3aed;
+      --color-accent-fill: rgba(217,119,6,0.12);
+      --color-accent-stroke: #d97706;
+      --color-alert-fill: rgba(225,29,72,0.12);
+      --color-alert-stroke: #e11d48;
+      --color-connector-fill: rgba(234,88,12,0.12);
+      --color-connector-stroke: #ea580c;
+      --color-neutral-fill: rgba(100,116,139,0.12);
+      --color-neutral-stroke: #64748b;
+      --color-highlight-fill: rgba(59,130,246,0.12);
+      --color-highlight-stroke: #3b82f6;
+    }
+    text { font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Noto Sans Mono', 'DejaVu Sans Mono', monospace; }
+    .title { font-size: 20px; font-weight: 700; fill: var(--text); }
+    .sub { font-size: 12px; fill: var(--text-muted); }
+    .name { font-size: 14px; font-weight: 600; fill: var(--text); }
+    .desc { font-size: 12px; fill: var(--text-muted); }
+    .label { font-size: 12px; fill: var(--text-muted); }
+  </style>
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--bg-grid)" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--arrow)"/>
+    </marker>
+    <marker id="arrow-start" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+      <polygon points="10 0, 0 3.5, 10 7" fill="var(--arrow)"/>
+    </marker>
+  </defs>
+
+  <!-- 1. background -->
+  <rect width="100%" height="100%" fill="var(--bg)"/>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+
+  <!-- 2. regions -->
+  <rect x="30" y="100" width="300" height="180" rx="12" fill="none" stroke="var(--color-accent-stroke)" stroke-width="1" stroke-dasharray="8,4"/>
+  <text x="44" y="120" font-size="12" font-weight="600" fill="var(--color-accent-stroke)">Claude Desktop (open, Mac awake)</text>
+  <rect x="370" y="310" width="460" height="170" rx="12" fill="none" stroke="var(--color-tertiary-stroke)" stroke-width="1" stroke-dasharray="8,4"/>
+  <text x="384" y="330" font-size="12" font-weight="600" fill="var(--color-tertiary-stroke)">~/.routines/&lt;name&gt;/   your files, not in git</text>
+
+  <!-- 3. arrows -->
+  <line x1="310" y1="198" x2="438" y2="198" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="385" y="190" class="label" text-anchor="middle">starts</text>
+  <text x="385" y="216" class="label" text-anchor="middle">a run</text>
+
+  <line x1="740" y1="160" x2="868" y2="160" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="804" y="152" class="label" text-anchor="middle">calls</text>
+
+  <path d="M 740,240 L 985,240 L 985,398" fill="none" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="862" y="233" class="label" text-anchor="middle">needs-you: asks, notifies</text>
+
+  <line x1="590" y1="252" x2="590" y2="308" stroke="var(--arrow)" stroke-width="1.5" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+  <text x="602" y="285" class="label">reads instructions, writes the record</text>
+
+  <line x1="310" y1="405" x2="368" y2="405" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="339" y="397" class="label" text-anchor="middle">reads</text>
+
+  <path d="M 170,460 L 170,600 L 438,600" fill="none" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="304" y="592" class="label" text-anchor="middle">if anything is flagged</text>
+
+  <path d="M 740,600 L 985,600 L 985,512" fill="none" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 4. masks -->
+  <rect x="50" y="136" width="260" height="124" rx="6" fill="var(--mask)"/>
+  <rect x="440" y="120" width="300" height="130" rx="6" fill="var(--mask)"/>
+  <rect x="870" y="110" width="230" height="100" rx="6" fill="var(--mask)"/>
+  <rect x="390" y="350" width="128" height="100" rx="6" fill="var(--mask)"/>
+  <rect x="536" y="350" width="128" height="100" rx="6" fill="var(--mask)"/>
+  <rect x="682" y="350" width="128" height="100" rx="6" fill="var(--mask)"/>
+  <rect x="30" y="350" width="280" height="110" rx="6" fill="var(--mask)"/>
+  <rect x="440" y="560" width="300" height="80" rx="6" fill="var(--mask)"/>
+  <rect x="870" y="400" width="230" height="110" rx="6" fill="var(--mask)"/>
+
+  <!-- 5. components + 6. text -->
+  <rect x="50" y="136" width="260" height="124" rx="6" fill="var(--color-accent-fill)" stroke="var(--color-accent-stroke)" stroke-width="1.5"/>
+  <text x="180" y="162" class="name" text-anchor="middle">Local scheduled task</text>
+  <text x="180" y="186" class="desc" text-anchor="middle">prompt: /routine run &lt;name&gt;</text>
+  <text x="180" y="206" class="desc" text-anchor="middle">folder: ~/.routines/&lt;name&gt;</text>
+  <text x="180" y="226" class="desc" text-anchor="middle">schedule: set in the app</text>
+
+  <rect x="440" y="120" width="300" height="130" rx="6" fill="var(--color-secondary-fill)" stroke="var(--color-secondary-stroke)" stroke-width="1.5"/>
+  <text x="590" y="148" class="name" text-anchor="middle">routine skill</text>
+  <text x="590" y="172" class="desc" text-anchor="middle">~/.claude/skills/routine</text>
+  <text x="590" y="196" class="desc" text-anchor="middle">writes the record first,</text>
+  <text x="590" y="216" class="desc" text-anchor="middle">asks before changes, ends as</text>
+  <text x="590" y="236" class="desc" text-anchor="middle">done / needs-you / failed</text>
+
+  <rect x="870" y="110" width="230" height="100" rx="6" fill="var(--color-neutral-fill)" stroke="var(--color-neutral-stroke)" stroke-width="1.5"/>
+  <text x="985" y="138" class="name" text-anchor="middle">Your other skills</text>
+  <text x="985" y="162" class="desc" text-anchor="middle">calendar, mail, gh,</text>
+  <text x="985" y="182" class="desc" text-anchor="middle">timesheets ...</text>
+
+  <rect x="390" y="350" width="128" height="100" rx="6" fill="var(--color-tertiary-fill)" stroke="var(--color-tertiary-stroke)" stroke-width="1.5"/>
+  <text x="454" y="380" class="name" text-anchor="middle">ROUTINE.md</text>
+  <text x="454" y="402" class="desc" text-anchor="middle">what to do</text>
+  <text x="454" y="420" class="desc" text-anchor="middle">and when</text>
+  <text x="454" y="438" class="desc" text-anchor="middle">to ask</text>
+
+  <rect x="536" y="350" width="128" height="100" rx="6" fill="var(--color-tertiary-fill)" stroke="var(--color-tertiary-stroke)" stroke-width="1.5"/>
+  <text x="600" y="380" class="name" text-anchor="middle">notes.md</text>
+  <text x="600" y="402" class="desc" text-anchor="middle">what it has</text>
+  <text x="600" y="420" class="desc" text-anchor="middle">learned</text>
+  <text x="600" y="438" class="desc" text-anchor="middle">from you</text>
+
+  <rect x="682" y="350" width="128" height="100" rx="6" fill="var(--color-tertiary-fill)" stroke="var(--color-tertiary-stroke)" stroke-width="1.5"/>
+  <text x="746" y="380" class="name" text-anchor="middle">runs/</text>
+  <text x="746" y="402" class="desc" text-anchor="middle">one record</text>
+  <text x="746" y="420" class="desc" text-anchor="middle">per run</text>
+
+  <rect x="30" y="350" width="280" height="110" rx="6" fill="var(--color-connector-fill)" stroke="var(--color-connector-stroke)" stroke-width="1.5"/>
+  <text x="170" y="378" class="name" text-anchor="middle">launchd watchdog</text>
+  <text x="170" y="402" class="desc" text-anchor="middle">09:30 and 17:00 daily</text>
+  <text x="170" y="422" class="desc" text-anchor="middle">runs status.py</text>
+  <text x="170" y="442" class="desc" text-anchor="middle">no Claude needed</text>
+
+  <rect x="440" y="560" width="300" height="80" rx="6" fill="var(--color-alert-fill)" stroke="var(--color-alert-stroke)" stroke-width="1.5"/>
+  <text x="590" y="592" class="name" text-anchor="middle">macOS notification</text>
+  <text x="590" y="616" class="desc" text-anchor="middle">lists the flagged routines</text>
+
+  <rect x="870" y="400" width="230" height="110" rx="6" fill="var(--color-highlight-fill)" stroke="var(--color-highlight-stroke)" stroke-width="1.5"/>
+  <text x="985" y="430" class="name" text-anchor="middle">You</text>
+  <text x="985" y="454" class="desc" text-anchor="middle">answer in the run's</text>
+  <text x="985" y="474" class="desc" text-anchor="middle">session (desk or phone)</text>
+  <text x="985" y="494" class="desc" text-anchor="middle">and fix what failed</text>
+
+  <!-- 8. title -->
+  <text x="30" y="42" class="title">How the pieces fit</text>
+  <text x="30" y="66" class="sub">Claude Desktop starts runs, the skill sets the rules, files hold the state, launchd checks the results.</text>
+  <text x="30" y="684" class="sub">The schedule lives in Claude Desktop. Everything else is a file you can read and edit.</text>
+</svg>

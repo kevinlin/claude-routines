@@ -2,6 +2,8 @@
 
 This repo is the `routine` skill for Claude Code: recurring jobs, kept as files. A routine says when a job runs, on whose data, and where you want to be asked first. It calls skills for the actual know-how.
 
+New here? Start with the [user guide](docs/user-guide/).
+
 There is no app here. Claude Desktop's local scheduled tasks do the scheduling, the `routine` skill holds the rules every run follows, and a small script checks that nothing failed quietly. The routines themselves are files in your routines home.
 
 ## Install
@@ -93,6 +95,7 @@ skills/routine/references/ROUTINE.template.md      the template for new routines
 skills/routine/scripts/status.py                   the health check
 skills/routine/scripts/test_status.py              its tests
 skills/routine/launchd/dev.routines.status.plist   the twice-daily watchdog
+docs/user-guide/                                   how to use the skill, with diagrams
 docs/specs/                                        design and implementation
 docs/product/                                      the decision that retired Flow Fabric
 ```

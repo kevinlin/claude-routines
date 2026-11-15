@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 890">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --bg-grid: #e2e8f0;
+      --mask: #f8fafc;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --arrow: #64748b;
+      --color-primary-fill: rgba(6,182,212,0.12);
+      --color-primary-stroke: #0891b2;
+      --color-secondary-stroke: #059669;
+      --color-accent-fill: rgba(217,119,6,0.12);
+      --color-accent-stroke: #d97706;
+      --color-alert-fill: rgba(225,29,72,0.12);
+      --color-alert-stroke: #e11d48;
+      --color-tertiary-fill: rgba(124,58,237,0.12);
+      --color-tertiary-stroke: #7c3aed;
+      --color-connector-fill: rgba(234,88,12,0.12);
+      --color-connector-stroke: #ea580c;
+      --color-neutral-fill: rgba(100,116,139,0.12);
+      --color-neutral-stroke: #64748b;
+      --color-highlight-fill: rgba(59,130,246,0.12);
+      --color-highlight-stroke: #3b82f6;
+    }
+    text { font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Noto Sans Mono', 'DejaVu Sans Mono', monospace; }
+    .title { font-size: 20px; font-weight: 700; fill: var(--text); }
+    .sub { font-size: 12px; fill: var(--text-muted); }
+    .name { font-size: 14px; font-weight: 600; fill: var(--text); }
+    .desc { font-size: 12px; fill: var(--text-muted); }
+    .label { font-size: 12px; fill: var(--text-muted); }
+    .q { font-size: 13px; font-weight: 600; fill: var(--text); }
+    .yes { font-size: 12px; font-weight: 600; fill: var(--color-secondary-stroke); }
+    .no { font-size: 12px; font-weight: 600; fill: var(--color-alert-stroke); }
+  </style>
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--bg-grid)" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--arrow)"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="var(--bg)"/>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+
+  <!-- arrows -->
+  <line x1="500" y1="164" x2="500" y2="198" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="610" y1="240" x2="698" y2="240" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="640" y="232" class="yes">yes</text>
+  <line x1="500" y1="280" x2="500" y2="328" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="512" y="308" class="no">no</text>
+  <line x1="620" y1="370" x2="698" y2="370" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="648" y="362" class="no">no</text>
+  <line x1="500" y1="410" x2="500" y2="458" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="512" y="438" class="yes">yes</text>
+  <line x1="500" y1="520" x2="500" y2="558" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="500" y1="640" x2="500" y2="670" stroke="var(--arrow)" stroke-width="1.5"/>
+  <line x1="140" y1="670" x2="860" y2="670" stroke="var(--arrow)" stroke-width="1.5"/>
+  <line x1="140" y1="670" x2="140" y2="718" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="380" y1="670" x2="380" y2="718" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="620" y1="670" x2="620" y2="718" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="860" y1="670" x2="860" y2="718" stroke="var(--arrow)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="150" y="698" class="label">needs-you</text>
+  <text x="390" y="698" class="label">running</text>
+  <text x="630" y="698" class="label">done</text>
+  <text x="870" y="698" class="label">anything else</text>
+
+  <!-- masks -->
+  <rect x="330" y="100" width="340" height="64" rx="25" fill="var(--mask)"/>
+  <rect x="700" y="210" width="240" height="60" rx="6" fill="var(--mask)"/>
+  <rect x="700" y="340" width="240" height="60" rx="6" fill="var(--mask)"/>
+  <rect x="330" y="460" width="340" height="60" rx="6" fill="var(--mask)"/>
+  <rect x="40" y="720" width="200" height="84" rx="6" fill="var(--mask)"/>
+  <rect x="280" y="720" width="200" height="84" rx="6" fill="var(--mask)"/>
+  <rect x="520" y="720" width="200" height="84" rx="6" fill="var(--mask)"/>
+  <rect x="760" y="720" width="200" height="84" rx="6" fill="var(--mask)"/>
+
+  <!-- start -->
+  <rect x="330" y="100" width="340" height="64" rx="25" fill="var(--color-highlight-fill)" stroke="var(--color-highlight-stroke)" stroke-width="1.5"/>
+  <text x="500" y="126" class="name" text-anchor="middle">Each folder with a ROUTINE.md</text>
+  <text x="500" y="148" class="desc" text-anchor="middle">names starting with _ or . are skipped</text>
+
+  <!-- decisions -->
+  <g transform="translate(500, 240)">
+    <polygon points="0,-40 110,0 0,40 -110,0" fill="var(--mask)"/>
+    <polygon points="0,-40 110,0 0,40 -110,0" fill="var(--color-accent-fill)" stroke="var(--color-accent-stroke)" stroke-width="1.5"/>
+    <text y="5" class="q" text-anchor="middle">paused: true?</text>
+  </g>
+  <g transform="translate(500, 370)">
+    <polygon points="0,-40 120,0 0,40 -120,0" fill="var(--mask)"/>
+    <polygon points="0,-40 120,0 0,40 -120,0" fill="var(--color-accent-fill)" stroke="var(--color-accent-stroke)" stroke-width="1.5"/>
+    <text y="5" class="q" text-anchor="middle">any run record?</text>
+  </g>
+  <g transform="translate(500, 600)">
+    <polygon points="0,-40 110,0 0,40 -110,0" fill="var(--mask)"/>
+    <polygon points="0,-40 110,0 0,40 -110,0" fill="var(--color-accent-fill)" stroke="var(--color-accent-stroke)" stroke-width="1.5"/>
+    <text y="5" class="q" text-anchor="middle">latest status?</text>
+  </g>
+
+  <!-- side outcomes -->
+  <rect x="700" y="210" width="240" height="60" rx="6" fill="var(--color-neutral-fill)" stroke="var(--color-neutral-stroke)" stroke-width="1.5"/>
+  <text x="820" y="234" class="name" text-anchor="middle">listed as paused</text>
+  <text x="820" y="256" class="desc" text-anchor="middle">never flagged</text>
+
+  <rect x="700" y="340" width="240" height="60" rx="6" fill="var(--color-neutral-fill)" stroke="var(--color-neutral-stroke)" stroke-width="1.5"/>
+  <text x="820" y="364" class="name" text-anchor="middle">NEVER RUN</text>
+  <text x="820" y="386" class="desc" text-anchor="middle">not paused, never ran</text>
+
+  <rect x="330" y="460" width="340" height="60" rx="6" fill="var(--color-primary-fill)" stroke="var(--color-primary-stroke)" stroke-width="1.5"/>
+  <text x="500" y="484" class="name" text-anchor="middle">Read the newest record</text>
+  <text x="500" y="506" class="desc" text-anchor="middle">latest file name in runs/</text>
+
+  <!-- flags -->
+  <rect x="40" y="720" width="200" height="84" rx="6" fill="var(--color-highlight-fill)" stroke="var(--color-highlight-stroke)" stroke-width="1.5"/>
+  <text x="140" y="748" class="name" text-anchor="middle">NEEDS-YOU</text>
+  <text x="140" y="772" class="desc" text-anchor="middle">a question is waiting</text>
+  <text x="140" y="790" class="desc" text-anchor="middle">for your answer</text>
+
+  <rect x="280" y="720" width="200" height="84" rx="6" fill="var(--color-connector-fill)" stroke="var(--color-connector-stroke)" stroke-width="1.5"/>
+  <text x="380" y="748" class="name" text-anchor="middle">STALLED</text>
+  <text x="380" y="772" class="desc" text-anchor="middle">if still running after</text>
+  <text x="380" y="790" class="desc" text-anchor="middle">more than 2 hours</text>
+
+  <rect x="520" y="720" width="200" height="84" rx="6" fill="var(--color-tertiary-fill)" stroke="var(--color-tertiary-stroke)" stroke-width="1.5"/>
+  <text x="620" y="748" class="name" text-anchor="middle">OVERDUE</text>
+  <text x="620" y="772" class="desc" text-anchor="middle">if it is older than</text>
+  <text x="620" y="790" class="desc" text-anchor="middle">cadence + grace</text>
+
+  <rect x="760" y="720" width="200" height="84" rx="6" fill="var(--color-alert-fill)" stroke="var(--color-alert-stroke)" stroke-width="1.5"/>
+  <text x="860" y="748" class="name" text-anchor="middle">FAILED</text>
+  <text x="860" y="772" class="desc" text-anchor="middle">failed, or a missing</text>
+  <text x="860" y="790" class="desc" text-anchor="middle">or unknown status</text>
+
+  <text x="30" y="42" class="title">How the health check decides</text>
+  <text x="30" y="66" class="sub">status.py runs this for every routine. No model call, standard library only.</text>
+  <text x="30" y="840" class="sub">STALLED and OVERDUE apply only past their limit; otherwise the row is clean. Grace is 2 h or 25 % of the</text>
+  <text x="30" y="858" class="sub">cadence, whichever is larger. With weekdays_only, weekend hours don't count. Exit code 1 if anything is flagged.</text>
+</svg>

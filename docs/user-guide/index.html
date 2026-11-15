@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Routine skill guide</title>
+<meta name="description" content="How the routine skill for Claude Code works: create, schedule and check recurring jobs kept as files.">
+<script>
+  // Apply the saved theme before first paint so the page never flashes the wrong colors.
+  try {
+    var t = localStorage.getItem("theme");
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+
+    --bg:        light-dark(#fbfaf7, #14161a);
+    --surface:   light-dark(#ffffff, #1c1f25);
+    --code-bg:   light-dark(#f2f0ea, #22262d);
+    --text:      light-dark(#1d2027, #e6e4df);
+    --muted:     light-dark(#565c66, #a3a7ae);
+    --rule:      light-dark(#e4e1d9, #2e333b);
+    --accent:    light-dark(#0e7490, #5ec8dd);
+    --accent-bg: light-dark(rgba(14,116,144,.08), rgba(94,200,221,.10));
+    --ring:      var(--accent);
+    --shadow:    0 1px 2px rgba(0,0,0,.04), 0 2px 6px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.04);
+
+    /* status colors match the health-check diagram */
+    --st-needs:   light-dark(#1d4ed8, #93b4fd);
+    --st-stalled: light-dark(#c2410c, #fdae74);
+    --st-overdue: light-dark(#6d28d9, #c4b0fc);
+    --st-failed:  light-dark(#be123c, #fb92a8);
+    --st-never:   light-dark(#4b5563, #b4bac3);
+
+    --radius: 12px;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  :root[data-theme="light"] { color-scheme: light; }
+  :root[data-theme="dark"]  { color-scheme: dark; }
+
+  * { box-sizing: border-box; }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-padding-top: 88px;
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 400 17px/1.65 var(--font-body);
+  }
+
+  .skip {
+    position: absolute; left: 16px; top: -48px; z-index: 100;
+    padding: 8px 16px; border-radius: 8px;
+    background: var(--accent); color: var(--bg);
+  }
+  .skip:focus { top: 12px; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 4px; }
+
+  /* header */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 12px 24px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .brand { font: 500 14px/1 var(--font-mono); color: var(--muted); text-decoration: none; }
+  .brand b { color: var(--text); font-weight: 500; }
+
+  .theme { display: flex; gap: 2px; padding: 3px; margin: 0; border: 0;
+           background: var(--code-bg); border-radius: 10px; }
+  .theme legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .theme input { position: absolute; opacity: 0; pointer-events: none; }
+  .theme label {
+    min-height: 36px; min-width: 44px; padding: 0 12px;
+    display: grid; place-items: center;
+    font: 500 13px/1 var(--font-body); color: var(--muted);
+    border-radius: 7px; cursor: pointer;
+    transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out);
+  }
+  .theme input:checked + label { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+  .theme input:focus-visible + label { outline: 2px solid var(--ring); outline-offset: 1px; }
+
+  /* layout */
+  .shell {
+    display: grid; grid-template-columns: 1fr; gap: 48px;
+    max-width: 1120px; margin: 0 auto; padding: 0 16px 96px;
+  }
+  @media (min-width: 960px) {
+    .shell { grid-template-columns: 220px minmax(0, 1fr); padding: 0 32px 128px; }
+  }
+  .toc { display: none; }
+  @media (min-width: 960px) {
+    .toc { display: block; position: sticky; top: 88px; align-self: start; padding-top: 56px; }
+  }
+  .toc h2 { border: 0; padding: 0; font: 600 12px/1 var(--font-body); letter-spacing: .08em; text-transform: uppercase;
+            color: var(--muted); margin: 0 0 12px; }
+  .toc ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--rule); }
+  .toc a {
+    display: block; padding: 6px 0 6px 16px; margin-left: -1px;
+    border-left: 2px solid transparent;
+    font-size: 14px; line-height: 1.4; color: var(--muted); text-decoration: none;
+    transition: color 100ms, border-color 100ms;
+  }
+  .toc a:hover { color: var(--text); }
+  .toc a[aria-current="true"] { color: var(--accent); border-left-color: var(--accent); }
+
+  main { min-width: 0; max-width: 72ch; }
+
+  /* hero */
+  .hero { padding: 56px 0 8px; }
+  .eyebrow { font: 500 13px/1 var(--font-mono); color: var(--accent); margin: 0 0 16px; }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 650; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: clamp(36px, 6vw, 52px); line-height: 1.08; margin: 0 0 20px; letter-spacing: -.01em; }
+  .lede { font-size: 19px; color: var(--muted); margin: 0; }
+
+  section { padding-top: 16px; }
+  h2 { font-size: 30px; margin: 32px 0 16px; padding-top: 24px; border-top: 1px solid var(--rule); }
+  h3 { font-size: 21px; margin: 32px 0 8px; }
+  p, li { text-wrap: pretty; }
+  p { margin: 0 0 16px; }
+  ul, ol { padding-left: 24px; margin: 0 0 16px; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--muted); }
+  strong { font-weight: 600; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+
+  code {
+    font: 400 .88em/1 var(--font-mono);
+    background: var(--code-bg); padding: 2px 6px; border-radius: 5px;
+  }
+  pre {
+    margin: 0 0 24px; padding: 16px 20px; overflow-x: auto;
+    background: var(--code-bg); border-radius: var(--radius);
+    font: 400 14px/1.6 var(--font-mono);
+  }
+  pre code { background: none; padding: 0; font-size: inherit; line-height: inherit; }
+  pre[data-label] { position: relative; padding-top: 36px; }
+  pre[data-label]::before {
+    content: attr(data-label); position: absolute; top: 12px; left: 20px;
+    font: 500 12px/1 var(--font-mono); color: var(--muted);
+  }
+
+  /* diagrams are drawn light-only, so they sit on a light panel in both themes */
+  figure { margin: 24px 0 32px; }
+  figure .panel {
+    display: block;
+    background: #f8fafc; border-radius: var(--radius); padding: 8px;
+    box-shadow: var(--shadow); outline: 1px solid var(--rule); outline-offset: -1px;
+  }
+  figure img { display: block; width: 100%; height: auto; border-radius: 4px; }
+  figcaption { margin-top: 8px; font-size: 14px; color: var(--muted); }
+
+  .table-wrap { overflow-x: auto; margin: 0 0 24px; border-radius: var(--radius);
+                background: var(--surface); box-shadow: var(--shadow); outline: 1px solid var(--rule); outline-offset: -1px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; line-height: 1.5; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 16px; border-bottom: 1px solid var(--rule); }
+  tr:last-child td { border-bottom: 0; }
+  th { font-weight: 600; font-size: 13px; color: var(--muted); background: var(--code-bg); }
+  td:first-child { white-space: nowrap; }
+
+  .rules { list-style: none; padding: 0; display: grid; gap: 12px; }
+  .rules li {
+    margin: 0; padding: 16px 20px; background: var(--surface);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    outline: 1px solid var(--rule); outline-offset: -1px;
+  }
+  .rules strong { display: block; margin-bottom: 2px; }
+  @media (min-width: 640px) { .rules { grid-template-columns: 1fr 1fr; } }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li { counter-increment: step; position: relative; padding-left: 44px; margin-bottom: 12px; }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 1px;
+    width: 28px; height: 28px; border-radius: 50%;
+    display: grid; place-items: center;
+    font: 500 13px/1 var(--font-mono); font-variant-numeric: tabular-nums;
+    background: var(--accent-bg); color: var(--accent);
+  }
+
+  .callout {
+    margin: 24px 0; padding: 16px 20px; border-radius: var(--radius);
+    background: var(--accent-bg); border-left: 3px solid var(--accent);
+  }
+  .callout p:last-child { margin: 0; }
+
+  .flag {
+    display: inline-block; font: 500 12px/1 var(--font-mono); white-space: nowrap;
+    padding: 5px 8px; border-radius: 6px;
+    color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 35%, transparent);
+  }
+  .flag.needs   { --c: var(--st-needs); }
+  .flag.stalled { --c: var(--st-stalled); }
+  .flag.failed  { --c: var(--st-failed); }
+  .flag.overdue { --c: var(--st-overdue); }
+  .flag.never   { --c: var(--st-never); }
+
+  /* full-screen diagram view */
+  figure .panel { cursor: zoom-in; }
+  .viewer {
+    width: 100vw; height: 100dvh; max-width: none; max-height: none;
+    margin: 0; padding: 56px 16px 16px; border: 0;
+    background: #f8fafc;
+  }
+  .viewer::backdrop { background: rgba(0,0,0,.6); }
+  .viewer[open] { display: grid; place-items: center; animation: viewer-in 200ms var(--ease-out); }
+  .viewer img { width: 100%; height: 100%; object-fit: contain; min-height: 0; }
+  .viewer-close {
+    position: fixed; top: 8px; right: 8px;
+    width: 44px; height: 44px; display: grid; place-items: center;
+    border: 0; border-radius: 10px; cursor: pointer;
+    background: rgba(15,23,42,.06); color: #0f172a;
+    transition: background-color 100ms;
+  }
+  .viewer-close:hover { background: rgba(15,23,42,.12); }
+  .viewer-close:active { transform: scale(.97); }
+  .viewer-close:focus-visible { outline: 2px solid #0e7490; outline-offset: 2px; }
+  @keyframes viewer-in { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: none; } }
+
+  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <a class="brand" href="#top"><b>routine</b> / user guide</a>
+  <fieldset class="theme">
+    <legend>Color theme</legend>
+    <input type="radio" name="theme" id="t-light" value="light"><label for="t-light">Light</label>
+    <input type="radio" name="theme" id="t-dark" value="dark"><label for="t-dark">Dark</label>
+    <input type="radio" name="theme" id="t-system" value="system"><label for="t-system">System</label>
+  </fieldset>
+</header>
+
+<div class="shell">
+  <nav class="toc" aria-label="On this page">
+    <h2>On this page</h2>
+    <ol>
+      <li><a href="#what">What a routine is</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#first">Your first routine</a></li>
+      <li><a href="#folder">Inside a routine folder</a></li>
+      <li><a href="#run">What happens in a run</a></li>
+      <li><a href="#asks">When Claude asks first</a></li>
+      <li><a href="#schedule">Schedule it in Claude Desktop</a></li>
+      <li><a href="#check">Check that it worked</a></li>
+      <li><a href="#changes">Everyday changes</a></li>
+      <li><a href="#limits">Limits</a></li>
+    </ol>
+  </nav>
+
+  <main id="main">
+    <header class="hero" id="top">
+      <p class="eyebrow">claude-routines</p>
+      <h1>User guide: the routine skill</h1>
+      <p class="lede">This guide is for people who use Claude Code and Claude Desktop on a Mac. It shows how to let Claude do a job that repeats, such as a Friday timesheet check or a morning briefing. You need no programming. A routine is a markdown file that you can read and edit.</p>
+    </header>
+
+    <section id="what" aria-labelledby="what-h">
+      <h2 id="what-h">What a routine is</h2>
+      <p>A skill teaches Claude how to do something, for example how to read your calendar or how to book time. A routine says when to do it, on whose data, and where Claude must stop and ask you first. Routines call skills. They do not copy them.</p>
+      <p>Each routine is a folder of plain files. Claude Desktop starts it on a schedule, the <code>routine</code> skill makes every run follow the same rules, and a small script checks that no run failed quietly.</p>
+      <figure>
+        <a class="panel" href="diagram/how-it-fits.svg"><img src="diagram/how-it-fits@2x.png" width="2260" height="1420" alt="How the pieces fit: a local scheduled task in Claude Desktop starts a run of the routine skill, which reads ROUTINE.md and notes.md, writes a record in runs/, calls your other skills and asks you when it needs you. A launchd watchdog runs status.py twice a day and posts a macOS notification if anything is flagged." loading="lazy"></a>
+        <figcaption>How the pieces fit.</figcaption>
+      </figure>
+      <p>Four rules hold for every routine:</p>
+      <ul class="rules">
+        <li><strong>Claude asks before it acts in your name.</strong> It stops before it sends, books, approves, merges or deletes, and it waits for your yes. One yes covers one item.</li>
+        <li><strong>No run fails silently.</strong> Each run writes a record before it starts work and ends as <code>done</code>, <code>needs-you</code> or <code>failed</code>. A check outside Claude flags anything else.</li>
+        <li><strong>Claude remembers across runs.</strong> Your preferences and corrections go into a notes file, not into a conversation that disappears.</li>
+        <li><strong>Everything is a file.</strong> You can open every routine, note and run record in an editor.</li>
+      </ul>
+    </section>
+
+    <section id="install" aria-labelledby="install-h">
+      <h2 id="install-h">Install</h2>
+      <pre><code>npx skills add kevinlin/claude-routines -g -a claude-code</code></pre>
+      <p>This puts the skill at <code>~/.claude/skills/routine</code>. You also need:</p>
+      <ul>
+        <li>Claude Desktop on macOS. Its local scheduled tasks start your routines.</li>
+        <li><code>python3</code> for the health check. macOS includes it with the command line tools.</li>
+      </ul>
+      <p>To check the install, type <code>/routine status</code> in a Claude Code session. Before you create a routine, it shows an empty table.</p>
+    </section>
+
+    <section id="first" aria-labelledby="first-h">
+      <h2 id="first-h">Your first routine</h2>
+      <figure>
+        <a class="panel" href="diagram/first-routine.svg"><img src="diagram/first-routine@2x.png" width="1640" height="1740" alt="The steps to create and schedule a routine: save a job you did by hand with /routine save, or describe it with /routine new; both give a paused draft. Then create a local task in Claude Desktop, press Run now and watch it, remove paused: true, and it runs on schedule." loading="lazy"></a>
+        <figcaption>The steps to create and schedule a routine.</figcaption>
+      </figure>
+      <p>There are two ways to start.</p>
+      <h3>Do the job once by hand, then save it</h3>
+      <p>This is the better way. Do the job in a normal Claude Code session, with the skills and tools it needs. Correct Claude where it gets something wrong. Then type:</p>
+      <pre><code>/routine save standup-prep</code></pre>
+      <p>Claude writes the routine from what happened in the session:</p>
+      <ul>
+        <li>The steps that you actually needed, in order. Dead ends are left out.</li>
+        <li>Each point where you made a decision becomes an "Ask before" item.</li>
+        <li>Each correction you gave goes into <code>notes.md</code>.</li>
+      </ul>
+      <p>Claude shows you the draft and asks what is wrong or missing before it saves anything.</p>
+      <h3>Describe the job</h3>
+      <p>Type <code>/routine new standup-prep</code>. Claude asks a few short questions: what the job is for, when it runs, what it reads, what it may change, where you want to be asked, and how you will know it went well. Then it writes the folder.</p>
+      <p>Both ways give you a draft in <code>~/.routines/standup-prep/</code> with <code>paused: true</code>. A new routine can also end with a "Settle on the first run" section: questions that Claude asks you on the first supervised run. Your answers go to <code>notes.md</code>, and the section is then deleted.</p>
+    </section>
+
+    <section id="folder" aria-labelledby="folder-h">
+      <h2 id="folder-h">Inside a routine folder</h2>
+<pre><code>~/.routines/
+  standup-prep/
+    ROUTINE.md                what to do; you edit this to change the routine
+    notes.md                  what Claude has learned about your preferences
+    runs/2026-11-20-0900.md   one record per run</code></pre>
+      <p>Set <code>ROUTINES_HOME</code> if you want the routines somewhere other than <code>~/.routines</code>. A folder counts as a routine when it holds a <code>ROUTINE.md</code> and its name does not start with <code>_</code> or <code>.</code>.</p>
+
+      <h3>ROUTINE.md</h3>
+      <p>Here is a complete example:</p>
+<pre data-label="ROUTINE.md"><code>---
+name: standup-prep
+purpose: Tell me what I did yesterday and what is on today, before standup.
+schedule: Weekdays 09:00
+cadence_hours: 24
+weekdays_only: true
+paused: true
+runs_on: desktop-local
+---
+
+## Goal
+
+A short note for today exists at `prep/&lt;YYYY-MM-DD&gt;.md`.
+
+## Steps
+
+1. Yesterday's merged pull requests and commits in the repos listed in `notes.md`, with `gh`.
+2. Today's meetings from my calendar.
+3. Write the note: done yesterday, planned today, blockers. 10 lines at most.
+
+## Ask before
+
+- Posting the note anywhere. This routine only writes inside its own folder.
+
+## Done when
+
+- The note for today exists and every source was read.
+
+## Report
+
+- Summary line: number of pull requests and meetings.
+- Notify on success: no</code></pre>
+      <p>The frontmatter is a list of flat <code>key: value</code> lines. The health check reads nothing else, so do not nest values.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Field</th><th scope="col">What it means</th></tr></thead>
+          <tbody>
+            <tr><td><code>name</code></td><td>The folder name.</td></tr>
+            <tr><td><code>purpose</code></td><td>One sentence, in your words.</td></tr>
+            <tr><td><code>schedule</code></td><td>When it runs, written for people. This is a note only. The real schedule is in Claude Desktop.</td></tr>
+            <tr><td><code>cadence_hours</code></td><td>The longest normal gap between runs: 24 for daily, 168 for weekly, 744 for monthly.</td></tr>
+            <tr><td><code>weekdays_only</code></td><td><code>true</code> if the routine never runs at weekends, so it is not flagged overdue on Monday morning.</td></tr>
+            <tr><td><code>paused</code></td><td><code>true</code> while the routine is a draft or switched off. The health check then ignores it.</td></tr>
+            <tr><td><code>runs_on</code></td><td><code>desktop-local</code>, or <code>cloud</code> for a cloud scheduled task.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Write the Steps as results to get and the skill to use. Do not write shell commands. The skill knows the commands and stays current when they change.</p>
+
+      <h3>notes.md</h3>
+      <p>This file holds your standing preferences and corrections, for example "don't book time on project X" or "keep it under ten lines". Claude reads it at the start of every run and adds to it when you tell it something that should hold next time. Each note is short and has a date. When a new note contradicts an old one, the old one is removed. You can edit the file yourself at any time.</p>
+
+      <h3>Run records</h3>
+      <p>Each run writes one file in <code>runs/</code>. Its name is the start time:</p>
+<pre data-label="runs/2026-11-20-0900.md"><code>---
+status: done
+started: 2026-11-20T09:00:12
+ended: 2026-11-20T09:01:40
+summary: 3 pull requests merged, 4 meetings today.
+---
+
+## Done
+- Read 2 repos and the calendar. Wrote prep/2026-11-20.md (8 lines).</code></pre>
+      <p>A <code>needs-you</code> record also has an <code>## Open question</code> section with the question, the options and the work already prepared. A <code>failed</code> record has an <code>## Error</code> section with the message and how far the run got.</p>
+    </section>
+
+    <section id="run" aria-labelledby="run-h">
+      <h2 id="run-h">What happens in a run</h2>
+      <figure>
+        <a class="panel" href="diagram/run-lifecycle.svg"><img src="diagram/run-lifecycle@2x.png" width="1840" height="1280" alt="One run, start to finish: the record starts as running, then ends as done when every step succeeded, failed when a step failed or a tool is missing, or needs-you when an ask-before item is reached. An answer resumes the run; with no answer, the next scheduled run asks the open question first." loading="lazy"></a>
+        <figcaption>One run, start to finish.</figcaption>
+      </figure>
+      <p>When the scheduled task fires, or when you type <code>/routine run standup-prep</code>, Claude does the same eight things each time:</p>
+      <ol class="steps">
+        <li>It reads <code>ROUTINE.md</code>, <code>notes.md</code> and the newest run record.</li>
+        <li>It writes the new run record with <code>status: running</code> before it does any work. If the run then crashes, the record shows it.</li>
+        <li>If the last run is still waiting on a question, it asks that question first, with the work already prepared. It does not do the work again and it does not choose an answer for you.</li>
+        <li>It does the Steps with the skills they name, and applies everything in <code>notes.md</code>.</li>
+        <li>It stops at each "Ask before" item (see the next section).</li>
+        <li>It closes the record as <code>done</code> with a one-line summary, or as <code>failed</code> with the reason. If any step failed or was skipped, the run is not <code>done</code>.</li>
+        <li>It adds new preferences and corrections to <code>notes.md</code>.</li>
+        <li>It sends a notification only for <code>needs-you</code> or <code>failed</code>, or when the Report section asks for one on success.</li>
+      </ol>
+      <p>Claude does not notify you about clean runs. If it did, you would soon learn to ignore its notifications.</p>
+    </section>
+
+    <section id="asks" aria-labelledby="asks-h">
+      <h2 id="asks-h">When Claude asks first</h2>
+      <p>Claude asks before each "Ask before" item. It also asks before any change outside the routine's own folder that the routine does not explicitly allow, such as sending, booking, approving, merging or deleting. Before it asks:</p>
+      <ul>
+        <li>It finishes the read-only work first, so that one answer settles the question.</li>
+        <li>It sets the record to <code>needs-you</code>, writes the question into the record, asks in the session and sends a notification.</li>
+      </ul>
+      <p>You answer in that run's session in Claude Desktop. With Remote Control on, you can also answer from your phone. The run then continues. A yes to Monday's booking is not a yes to Tuesday's.</p>
+      <p>If you do not answer, the run stops and the record stays <code>needs-you</code>. The next run asks the same question before it does anything else, so nothing is lost.</p>
+      <p>If a skill has its own confirmation step, for example a preview before it books, Claude follows that too. That step does not replace the routine's own question.</p>
+    </section>
+
+    <section id="schedule" aria-labelledby="schedule-h">
+      <h2 id="schedule-h">Schedule it in Claude Desktop</h2>
+      <ol class="steps">
+        <li>In Claude Desktop, go to Scheduled &gt; New &gt; Local.</li>
+        <li>Name the task after the routine. Set the prompt to <code>/routine run standup-prep</code>, the folder to <code>~/.routines/standup-prep</code>, and the schedule to match the routine's <code>schedule</code> line.</li>
+        <li>Press <strong>Run now</strong> and watch the first run. Answer its first-run questions. When it asks for permission to use a read-only tool, choose "always allow". Leave every tool that writes on "ask".</li>
+        <li>When the run looks right, remove <code>paused: true</code> from <code>ROUTINE.md</code>.</li>
+      </ol>
+      <div class="callout"><p>Never set a routine to bypass permissions to make it run unattended. The stops are how you stay in charge of what is done in your name.</p></div>
+    </section>
+
+    <section id="check" aria-labelledby="check-h">
+      <h2 id="check-h">Check that it worked</h2>
+      <p>Type <code>/routine status</code> in any Claude Code session, or run the script directly:</p>
+      <pre><code>python3 ~/.claude/skills/routine/scripts/status.py</code></pre>
+      <p>It prints one row per routine: its status, its last run, a flag and the summary line.</p>
+      <figure>
+        <a class="panel" href="diagram/health-check.svg"><img src="diagram/health-check@2x.png" width="2000" height="1780" alt="How the health check decides: paused routines are listed as paused and never flagged; a routine with no run record is NEVER RUN; otherwise the newest record gives NEEDS-YOU, STALLED if running over 2 hours, OVERDUE if older than cadence plus grace, or FAILED." loading="lazy"></a>
+        <figcaption>How the health check decides.</figcaption>
+      </figure>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Flag</th><th scope="col">What to do</th></tr></thead>
+          <tbody>
+            <tr><td><span class="flag needs">NEEDS-YOU</span></td><td>Open the run in Claude Desktop and answer. Or run the routine again, and it asks first.</td></tr>
+            <tr><td><span class="flag stalled">STALLED</span></td><td>The run crashed or hung. Read the record, then run the routine again.</td></tr>
+            <tr><td><span class="flag failed">FAILED</span></td><td>Read the <code>## Error</code> section of the record, fix the cause (often a login or a missing tool), and run again.</td></tr>
+            <tr><td><span class="flag overdue">OVERDUE</span></td><td>The routine did not run when expected. Is Claude Desktop open? Is the scheduled task on?</td></tr>
+            <tr><td><span class="flag never">NEVER RUN</span></td><td>You removed <code>paused: true</code>, but the routine has no run yet. Press Run now.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>The watchdog</h3>
+      <p>The watchdog runs the same check at 09:30 and 17:00 every day, even when Claude is closed. It posts one macOS notification that lists the flagged routines. Install it once:</p>
+<pre data-label="install"><code>cp ~/.claude/skills/routine/launchd/dev.routines.status.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.routines.status.plist</code></pre>
+      <p>To remove it:</p>
+<pre data-label="remove"><code>launchctl bootout gui/$(id -u)/dev.routines.status
+rm ~/Library/LaunchAgents/dev.routines.status.plist</code></pre>
+      <p>The output goes to <code>~/Library/Logs/routines-status.log</code>. The watchdog expects the skill at <code>~/.claude/skills/routine</code>.</p>
+    </section>
+
+    <section id="changes" aria-labelledby="changes-h">
+      <h2 id="changes-h">Everyday changes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">I want to</th><th scope="col">Do this</th></tr></thead>
+          <tbody>
+            <tr><td>Change what a routine does</td><td>Edit its <code>ROUTINE.md</code>. The next run uses it.</td></tr>
+            <tr><td>Correct how it does something</td><td>Tell Claude during a run, or add a line to <code>notes.md</code>.</td></tr>
+            <tr><td>Change when it runs</td><td>Edit the task in Claude Desktop. Update the <code>schedule</code> line to match.</td></tr>
+            <tr><td>Run it now</td><td><code>/routine run &lt;name&gt;</code> in any session, or Run now in Claude Desktop.</td></tr>
+            <tr><td>Pass something to one run</td><td><code>/routine run &lt;name&gt; &lt;args&gt;</code>, if the routine says what it accepts.</td></tr>
+            <tr><td>Switch it off</td><td>Set <code>paused: true</code> and pause the Desktop task.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="limits" aria-labelledby="limits-h">
+      <h2 id="limits-h">Limits</h2>
+      <ul>
+        <li>Routines run only while Claude Desktop is open and the Mac is awake. After sleep, Desktop starts one catch-up run for the most recent missed time. A 09:00 routine can then start at 23:00. Claude checks the time and records that the run was a catch-up.</li>
+        <li>Nothing checks that the <code>schedule</code> line matches the task in Claude Desktop.</li>
+        <li>A tool that asks for permission every time stops an unattended run until you answer.</li>
+        <li>If a tool or login is not available, the run is <code>failed</code> with the exact message. Claude does not use a different source and report as if nothing changed.</li>
+        <li>If a run dies before it writes its record, it is not visible until it shows as <code>OVERDUE</code>.</li>
+        <li>Some Claude Desktop behaviour has not been tested yet: answering from the phone, and what the next scheduled fire does while a run waits. The <a href="../../README.md#first-the-desktop-spike">README's "First: the Desktop spike" section</a> lists four checks to do once with a throwaway task.</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>claude-routines, MIT licensed. Source: <a href="https://github.com/kevinlin/claude-routines">github.com/kevinlin/claude-routines</a>.</p>
+    </footer>
+  </main>
+</div>
+
+<dialog class="viewer" id="viewer" aria-label="Diagram, full screen">
+  <button class="viewer-close" type="button" aria-label="Close full-screen view">
+    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+  <img alt="">
+</dialog>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var saved = root.dataset.theme || "system";
+    document.getElementById("t-" + saved).checked = true;
+    document.querySelectorAll('input[name="theme"]').forEach(function (input) {
+      input.addEventListener("change", function () {
+        if (input.value === "system") delete root.dataset.theme;
+        else root.dataset.theme = input.value;
+        try {
+          if (input.value === "system") localStorage.removeItem("theme");
+          else localStorage.setItem("theme", input.value);
+        } catch (e) {}
+      });
+    });
+
+    // Full-screen diagram view. <dialog> gives Esc to close and returns focus to the link.
+    var viewer = document.getElementById("viewer");
+    var viewerImg = viewer.querySelector("img");
+    var opener = null;
+    document.querySelectorAll("figure .panel").forEach(function (link) {
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        var img = link.querySelector("img");
+        viewerImg.src = link.getAttribute("href");
+        viewerImg.alt = img.alt;
+        opener = link;
+        viewer.showModal();
+      });
+    });
+    viewer.querySelector(".viewer-close").addEventListener("click", function () { viewer.close(); });
+    viewer.addEventListener("click", function (e) { if (e.target === viewer) viewer.close(); });
+    // Mouse clicks on links don't focus them in Safari or Chrome on macOS, so return focus by hand.
+    viewer.addEventListener("close", function () { if (opener) opener.focus(); });
+
+    // Highlight the TOC entry for the section in view.
+    var links = {};
+    document.querySelectorAll(".toc a").forEach(function (a) { links[a.hash.slice(1)] = a; });
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        Object.values(links).forEach(function (a) { a.removeAttribute("aria-current"); });
+        if (links[e.target.id]) links[e.target.id].setAttribute("aria-current", "true");
+      });
+    }, { rootMargin: "-20% 0px -70% 0px" });
+    document.querySelectorAll("main section[id]").forEach(function (s) { observer.observe(s); });
+  })();
+</script>
+</body>
+</html>
