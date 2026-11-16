@@ -452,6 +452,15 @@ class ServerTest(LiveServer):
     def test_it_binds_loopback_only(self):
         self.assertEqual(self.server.server_address[0], "127.0.0.1")
 
+    def test_starting_the_server_does_no_reverse_dns_lookup(self):
+        # HTTPServer.server_bind calls socket.getfqdn, which can take half a minute on a slow resolver.
+        with mock.patch("socket.getfqdn", side_effect=AssertionError("reverse DNS lookup")) as lookup:
+            server, token = self.start()
+            self.assertEqual(self.get(f"/?t={token}", server=server)[0], 200)
+        lookup.assert_not_called()
+        self.assertEqual(server.server_address[0], "127.0.0.1")
+        self.assertEqual((server.server_name, server.server_port), ("127.0.0.1", server.server_address[1]))
+
     def test_the_request_timeout_is_ten_seconds(self):
         self.assertIs(self.server.RequestHandlerClass, console.Handler)
         self.assertEqual(console.Handler.timeout, 10)

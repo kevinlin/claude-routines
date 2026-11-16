@@ -16,6 +16,7 @@ import html
 import math
 import os
 import secrets
+import socketserver
 import stat
 import sys
 import tempfile
@@ -469,8 +470,16 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(303, "", location=f"/?t={self.server.token}")
 
 
+class Server(HTTPServer):
+    def server_bind(self):
+        # HTTPServer.server_bind asks DNS for this host's name (socket.getfqdn), which can take half a minute on a
+        # slow resolver; bound to 127.0.0.1 that name is never used.
+        socketserver.TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
+
+
 def make_server(home, token, port=0, clock=datetime.now):
-    server = HTTPServer(("127.0.0.1", port), Handler)
+    server = Server(("127.0.0.1", port), Handler)
     server.home, server.token, server.clock = Path(home), token, clock
     return server
 
