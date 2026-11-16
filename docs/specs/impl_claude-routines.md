@@ -98,6 +98,7 @@ Design: the "Console" section of the design doc.
 - Done: skill text, README, user guide, CHANGELOG and version 0.2.0. The watchdog plist refreshes the snapshot before the check, and CI runs both suites on the system Python and on 3.13.
 - Verified 2026-11-17: both suites on `/usr/bin/python3` 3.9.6 and python3.13; each server guard removed in a throwaway copy fails a test; an independent run of the gate passed on the release commit; a save through the real form in Chrome changed only the edited lines; the reinstalled watchdog exited 0 and rewrote `console.html`; `/routine console` printed the path in a fresh session.
 - Found in review and fixed before release: a POST body shorter than its declared length was written. It is now refused.
+- Found by CI after the first push and fixed in the next commit: the server did a reverse DNS lookup at start. On the macOS runner with Python 3.13 that took longer than the acceptance tests wait for the URL. Local runs on 3.9.6 and 3.13 never showed it.
 - Not done: the console does not check config, and nothing reads the Desktop task.
 - Rerun:
   - `cd skills/routine/scripts && python3 -m unittest`, and `python3 -m unittest discover -s tests/e2e` from the repo root
