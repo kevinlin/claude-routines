@@ -14,6 +14,7 @@ Design: [design_claude-routines.md](design_claude-routines.md). Status as of 202
 | 8 | One-week acceptance | Not started |
 | 9 | Re-point paths after the move | Done |
 | 10 | Skill repo and publish | Done |
+| 11 | Console (0.2.0) | In progress |
 
 ## 1. Desktop spike
 
@@ -88,3 +89,18 @@ The repo moved out of `~/routines` into a normal checkout. These still point at 
   - `launchctl kickstart` exits 0 and the log shows the table
   - `/routine status` works in a fresh session
   - `npx skills add kevinlin/claude-routines --list` finds `routine`
+
+## 11. Console (0.2.0)
+
+Design: the "Console" section of the design doc.
+
+- `console.py` with `test_console.py`: the snapshot page, the edit server and the frontmatter writer.
+- `tests/e2e/`: an acceptance gate written from the CLI contract by someone who has not seen the implementation. Stdlib `unittest`, driving the real CLI as a subprocess and the real server over HTTP.
+- Skill, README, user guide, CHANGELOG and version 0.2.0. The watchdog plist refreshes the snapshot before the check.
+- CI runs the e2e suite next to the unit tests.
+- Verify:
+  - unit and e2e suites on `/usr/bin/python3` and python3.13
+  - `console.py --no-open` lists the same routines as `status.py`, and `status.py` ignores `console.html`
+  - in a browser with a throwaway home: the snapshot and the served page in light and dark, a `paused` round trip that keeps the body, a 409 on a stale form, a 403 without the token and on a foreign `Host`
+  - after reinstalling the plist, `launchctl kickstart` exits 0, the log shows the table and `console.html` is fresh
+  - `/routine console` works in a fresh session
