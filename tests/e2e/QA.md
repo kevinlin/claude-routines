@@ -1,6 +1,6 @@
 # QA procedure for the routines console
 
-The same 69 checks as `console.feature` and `test_console_e2e.py`, for a person with a
+The same 70 checks as `console.feature` and `test_console_e2e.py`, for a person with a
 browser, a terminal and `curl`. Each heading is a scenario ID. Run all of them, or the
 group you care about. "Unchanged" always means the checksum listing (`snap`, below) is
 identical before and after.
@@ -304,6 +304,16 @@ no length with unknown id [411]; length 99999 with unknown id [413]; unknown id 
 `time curl -si --max-time 25 "http://127.0.0.1:$PA/?t=$TA" | head -1`.
 The curl waits (no answer while terminal 1 holds the connection); about 10 s after `nc` was opened the server drops it, and curl then prints `HTTP/1.0 200 OK`
 after roughly 10 s (`time` shows 8 to 14 s).
+
+**CON-70** A body shorter than its `Content-Length` is refused. `snap > /tmp/b.txt`, then declare the full length of a valid body and send 20 bytes less,
+and half-close so the server sees the end of the stream (macOS `nc` does this itself when `printf` ends; on OpenBSD netcat add `-N`, on GNU/nmap netcat add `-q 1`):
+```sh
+S=$(sha edit-lf); P=$(head -c 40 /dev/zero | tr '\0' p); BODY="sha=$S&purpose=$P"; echo ${#BODY}      # declare this many
+printf "POST /routine/edit-lf?t=$T HTTP/1.0\r\nHost: 127.0.0.1:$PB\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: ${#BODY}\r\n\r\n%s" "${BODY%????????????????????}" \
+  | nc -w 3 127.0.0.1 $PB | head -1
+```
+Expect `HTTP/1.0 400 ...` at once (not after about 10 s), and `snap | diff /tmp/b.txt -` is empty. The same request to `/routine/does-not-exist` is `404`,
+and with `Content-Type: text/plain` it is `415`. With the whole `"$BODY"` instead it is `303` and `purpose` becomes 40 `p`.
 
 ## Clean up
 

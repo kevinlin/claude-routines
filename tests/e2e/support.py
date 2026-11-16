@@ -48,10 +48,14 @@ URL_LINE = re.compile(r"http://127\.0\.0\.1:(\d+)/\?t=([A-Za-z0-9_-]+)")
 
 # Wraps the real script so SIGINT behaves like Ctrl-C even when the test run
 # itself was started with SIGINT ignored (background job, some CI shells).
+# `python -c` leaves the script's folder off sys.path, but a plain
+# `python console.py` puts it first, and console.py imports its sibling
+# status.py. So the wrapper puts the folder at sys.path[0] before run_path.
 _SIGINT_WRAPPER = (
-    "import runpy, signal, sys; "
+    "import os, runpy, signal, sys; "
     "signal.signal(signal.SIGINT, signal.default_int_handler); "
     "sys.argv = sys.argv[1:]; "
+    "sys.path.insert(0, os.path.dirname(os.path.abspath(sys.argv[0]))); "
     "runpy.run_path(sys.argv[0], run_name='__main__')"
 )
 
@@ -635,6 +639,27 @@ def raw_exchange(port, payload, timeout=10):
         sock.close()
 
 
+def post_short(port, target, body, *, short_by=20, host="default", content_type=FORM_TYPE, timeout=10):
+    """POST over a raw socket that declares len(body) but stops short_by bytes early.
+
+    The client then half-closes (SHUT_WR) so the server sees end-of-stream mid-body,
+    and reads the answer. short_by=0 sends the whole body and is the control case.
+    """
+    head = "POST %s HTTP/1.0\r\nHost: %s\r\n" % (target, "127.0.0.1:%d" % port if host == "default" else host)
+    if content_type is not None:
+        head += "Content-Type: %s\r\n" % content_type
+    head += "Content-Length: %d\r\n\r\n" % len(body)
+    sock = socket.create_connection(("127.0.0.1", port), timeout)
+    try:
+        sock.sendall(head.encode("ascii") + body[:len(body) - short_by])
+        sock.shutdown(socket.SHUT_WR)
+        resp = http.client.HTTPResponse(sock)
+        resp.begin()
+        return _response(resp)
+    finally:
+        sock.close()
+
+
 def free_port():
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
@@ -749,6 +774,13 @@ class Server:
         elif content_length is not None:
             hdrs.append(("Content-Length", str(content_length)))
         return http_request(self.port, "POST", target, headers=hdrs, host=host, body=body, timeout=timeout)
+
+    def post_short(self, rid, fields, *, short_by=20, raw_id=None, query=None, **kw):
+        """Like post(), but the body stops short_by bytes before the declared Content-Length."""
+        body = urlencode(list(fields)).encode("utf-8")
+        target = "/routine/%s?%s" % (rid if raw_id is None else raw_id,
+                                     "t=" + self.token if query is None else query)
+        return post_short(self.port, target, body, short_by=short_by, **kw)
 
     def stop(self):
         if self.proc.poll() is None:

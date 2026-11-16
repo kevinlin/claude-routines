@@ -675,3 +675,15 @@ Feature: The routines console
     Then it gets no answer while the first connection is open
     And the first connection is closed between 8 and 14 seconds after it opened
     And then the second connection gets its 200
+
+  @CON-70
+  Scenario: A body shorter than Content-Length is 400
+    Given a running server
+    And a POST to an existing routine with the valid token, Host and form content type
+    And a valid body, sha first and then a long purpose, whose full length is declared in Content-Length
+    When I send the headers and the body 20 bytes short, then half-close the socket
+    Then the answer is 400
+    And every file under the fixture is byte-identical
+    And the same short body to an unknown id is 404
+    And the same short body with a text/plain content type is 415
+    And the same request with the whole body is 303 and changes purpose

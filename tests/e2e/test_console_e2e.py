@@ -978,6 +978,35 @@ class ConsoleGate(S.ConsoleCase):
         finally:
             stalled.close()
 
+    def test_con_70_body_shorter_than_content_length_is_400(self):
+        home = self.make_home(["edit-lf"])
+        server = self.serve(home)
+        before_bytes = home.read("edit-lf")
+        # sha first, then a long purpose: the 20 missing bytes all fall inside purpose,
+        # so what did arrive still parses as a valid form
+        fields = [("sha", S.sha256(before_bytes)), ("purpose", "p" * 300)]
+        before = home.tree()
+
+        def short(label, rid="edit-lf", **kw):
+            try:
+                return server.post_short(rid, fields, short_by=20, **kw)
+            except socket.timeout:
+                self.fail("%s: no answer after the client half-closed mid-body" % label)
+
+        resp = short("short body")
+        self.assertEqual(resp.status, 400, resp)
+        self.assertEqual(home.tree(), before, "a short body changed files")
+        # the body is read after the 415/411/413 checks and after the id check
+        resp = short("unknown id", rid="does-not-exist")
+        self.assertEqual(resp.status, 404, resp)
+        resp = short("wrong content type", content_type="text/plain")
+        self.assertEqual(resp.status, 415, resp)
+        self.assertEqual(home.tree(), before, "a refused short body changed files")
+        # control: the same request with the whole body is accepted
+        resp = server.post_short("edit-lf", fields, short_by=0)
+        self.assertEqual(resp.status, 303, resp)
+        self.assertEqual(home.read("edit-lf"), S.oracle_set(before_bytes, {"purpose": "p" * 300}))
+
 
 if __name__ == "__main__":
     import unittest
