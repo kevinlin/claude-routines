@@ -16,5 +16,16 @@ jobs:
       - name: Unit tests
         working-directory: skills/routine/scripts
         run: /usr/bin/python3 -m unittest -v
+      - name: Acceptance tests
+        run: /usr/bin/python3 -m unittest discover -s tests/e2e -v
       - name: Lint launchd plist
         run: plutil -lint skills/routine/launchd/dev.routines.status.plist
+      # The same tests again on a current Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Unit tests (Python 3.13)
+        working-directory: skills/routine/scripts
+        run: python -m unittest -v
+      - name: Acceptance tests (Python 3.13)
+        run: python -m unittest discover -s tests/e2e -v

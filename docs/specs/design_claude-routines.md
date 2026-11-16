@@ -233,7 +233,7 @@ Rules the server holds:
 
 - It binds `127.0.0.1` only. Every request carries the per-run token in the query string, or gets 403. The token comes from `secrets`, and a token from an earlier server run is worthless.
 - The `Host` header must be `127.0.0.1:<port>` or `localhost:<port>`, or the request gets 403. This blocks DNS rebinding.
-- A POST is form-encoded, declares its length and is at most 16 KB. The size is checked from the header before the body is read, and a request that stalls is dropped after 10 seconds.
+- A POST is form-encoded, declares its length and is at most 16 KB. The size is checked from the header before the body is read, and a request that stalls is dropped after 10 seconds. A body that ends before its declared length is refused, so a cut-off value never reaches the file.
 - The edit id is the routine's folder name, never the `name` in the frontmatter, which nothing keeps unique. The id is looked up among the listed folders and never joined into a path. An unknown id gets 404.
 - Values: no line separator of any kind that `str.splitlines` knows; no quote at the start or end, because the reader would strip it; `cadence_hours` is a finite positive number; the two booleans are `true` or `false`; `runs_on` is `desktop-local` or `cloud`. Any other field is refused.
 - All file content is HTML-escaped, and the page is served with a content security policy that allows no scripts. Notes and run records can hold text a run copied from outside.

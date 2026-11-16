@@ -469,6 +469,25 @@ summary: 3 pull requests merged, 4 meetings today.
         </table>
       </div>
 
+      <h3>The console</h3>
+      <p>The console shows every routine on one page. Type <code>/routine console</code>, or run the script directly:</p>
+      <pre><code>python3 ~/.claude/skills/routine/scripts/console.py</code></pre>
+      <p>It writes <code>console.html</code> in your routines home, prints the path and opens the page in your browser. The page is a snapshot. It changes nothing, and you can delete the file at any time. It shows:</p>
+      <ul>
+        <li>A status table with one row per routine: name, status, last run, flag and summary. Flagged routines come first.</li>
+        <li>For each routine: its six frontmatter fields, the text of <code>ROUTINE.md</code>, <code>notes.md</code> and the newest five run records.</li>
+        <li>The time the page was made and the path of each <code>ROUTINE.md</code>.</li>
+      </ul>
+      <p>To change a setting without opening the file, type <code>/routine console edit</code>, or run:</p>
+      <pre><code>python3 ~/.claude/skills/routine/scripts/console.py --serve</code></pre>
+      <p>This writes the page, serves it on your Mac only and prints a URL. Open the URL, and each routine has a form. The URL holds a token that is new each time the server starts. The server stops by itself after 30 minutes without a request.</p>
+      <p>The forms change six fields: <code>purpose</code>, <code>schedule</code>, <code>cadence_hours</code>, <code>weekdays_only</code>, <code>paused</code> and <code>runs_on</code>. You edit everything else as files: the Steps, <code>notes.md</code> and the run records. If <code>ROUTINE.md</code> changed after the page was loaded, the save is refused. Reload the page and try again.</p>
+      <p>Two things the console does not do:</p>
+      <ul>
+        <li>Pausing a routine in the console sets <code>paused: true</code> in its <code>ROUTINE.md</code>. It does not pause the task in Claude Desktop.</li>
+        <li>It does not answer a <code>needs-you</code> question. Answer it in the Claude session.</li>
+      </ul>
+
       <h3>The watchdog</h3>
       <p>The watchdog runs the same check at 09:30 and 17:00 every day, even when Claude is closed. It posts one macOS notification that lists the flagged routines. Install it once:</p>
 <pre data-label="install"><code>cp ~/.claude/skills/routine/launchd/dev.routines.status.plist ~/Library/LaunchAgents/
@@ -476,7 +495,7 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.routines.status.plis
       <p>To remove it:</p>
 <pre data-label="remove"><code>launchctl bootout gui/$(id -u)/dev.routines.status
 rm ~/Library/LaunchAgents/dev.routines.status.plist</code></pre>
-      <p>The output goes to <code>~/Library/Logs/routines-status.log</code>. The watchdog expects the skill at <code>~/.claude/skills/routine</code>.</p>
+      <p>The output goes to <code>~/Library/Logs/routines-status.log</code>. The watchdog expects the skill at <code>~/.claude/skills/routine</code>. Before each check it refreshes <code>console.html</code>; if you installed the watchdog before 0.2.0, remove it and install it again to get that.</p>
     </section>
 
     <section id="changes" aria-labelledby="changes-h">
@@ -488,6 +507,7 @@ rm ~/Library/LaunchAgents/dev.routines.status.plist</code></pre>
             <tr><td>Change what a routine does</td><td>Edit its <code>ROUTINE.md</code>. The next run uses it.</td></tr>
             <tr><td>Correct how it does something</td><td>Tell Claude during a run, or add a line to <code>notes.md</code>.</td></tr>
             <tr><td>Change when it runs</td><td>Edit the task in Claude Desktop. Update the <code>schedule</code> line to match.</td></tr>
+            <tr><td>Change a setting in a form</td><td><code>/routine console edit</code>, then use the form to change <code>schedule</code>, <code>cadence_hours</code> or <code>paused</code>. This changes the file. The task in Claude Desktop stays as it is.</td></tr>
             <tr><td>Run it now</td><td><code>/routine run &lt;name&gt;</code> in any session, or Run now in Claude Desktop.</td></tr>
             <tr><td>Pass something to one run</td><td><code>/routine run &lt;name&gt; &lt;args&gt;</code>, if the routine says what it accepts.</td></tr>
             <tr><td>Switch it off</td><td>Set <code>paused: true</code> and pause the Desktop task.</td></tr>
@@ -502,6 +522,8 @@ rm ~/Library/LaunchAgents/dev.routines.status.plist</code></pre>
         <li>Routines run only while Claude Desktop is open and the Mac is awake. After sleep, Desktop starts one catch-up run for the most recent missed time. A 09:00 routine can then start at 23:00. Claude checks the time and records that the run was a catch-up.</li>
         <li>Nothing checks that the <code>schedule</code> line matches the task in Claude Desktop.</li>
         <li>A tool that asks for permission every time stops an unattended run until you answer.</li>
+        <li>The console snapshot is as old as its last refresh: the last <code>/routine console</code>, the last save in the edit forms, or the last watchdog run.</li>
+        <li>Pausing a routine in the console sets <code>paused: true</code> in its <code>ROUTINE.md</code>. It does not pause the task in Claude Desktop.</li>
         <li>If a tool or login is not available, the run is <code>failed</code> with the exact message. Claude does not use a different source and report as if nothing changed.</li>
         <li>If a run dies before it writes its record, it is not visible until it shows as <code>OVERDUE</code>.</li>
         <li>Some Claude Desktop behaviour has not been tested yet: answering from the phone, and what the next scheduled fire does while a run waits. The <a href="../../README.md#first-the-desktop-spike">README's "First: the Desktop spike" section</a> lists four checks to do once with a throwaway task.</li>

@@ -9,9 +9,9 @@
   <array>
     <string>/bin/sh</string>
     <string>-c</string>
-    <string>exec /usr/bin/python3 "$HOME/.claude/skills/routine/scripts/status.py" --notify &gt;&gt; "$HOME/Library/Logs/routines-status.log" 2&gt;&amp;1</string>
+    <string>/usr/bin/python3 "$HOME/.claude/skills/routine/scripts/console.py" --no-open &gt;&gt; "$HOME/Library/Logs/routines-status.log" 2&gt;&amp;1; exec /usr/bin/python3 "$HOME/.claude/skills/routine/scripts/status.py" --notify &gt;&gt; "$HOME/Library/Logs/routines-status.log" 2&gt;&amp;1</string>
   </array>
-  <!-- Twice a day, independent of Claude: flags failed, stalled, overdue and waiting routines. -->
+  <!-- Twice a day, independent of Claude: first refreshes the console.html snapshot, then flags failed, stalled, overdue and waiting routines. The two commands are joined with a semicolon on purpose: the health check must run even when the snapshot fails. -->
   <key>StartCalendarInterval</key>
   <array>
     <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>30</integer></dict>

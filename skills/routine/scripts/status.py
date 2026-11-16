@@ -91,16 +91,19 @@ def check(folder, now):
     return row
 
 
-def report(home, now):
+def folders(home):
     root = Path(home).expanduser()
     if not root.is_dir():
         return []  # fresh install: nothing created yet
-    folders = sorted(p for p in root.iterdir() if p.is_dir())
     return [
-        check(p, now)
-        for p in folders
+        p
+        for p in sorted(p for p in root.iterdir() if p.is_dir())
         if not p.name.startswith(("_", ".")) and (p / "ROUTINE.md").is_file()
     ]
+
+
+def report(home, now):
+    return [check(p, now) for p in folders(home)]
 
 
 def notify(message):

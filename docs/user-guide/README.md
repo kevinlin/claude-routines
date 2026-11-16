@@ -200,6 +200,35 @@ It prints one row per routine: its status, its last run, a flag and the summary 
 | `OVERDUE` | The routine did not run when expected. Is Claude Desktop open? Is the scheduled task on? |
 | `NEVER RUN` | You removed `paused: true`, but the routine has no run yet. Press Run now. |
 
+### The console
+
+The console shows every routine on one page. Type `/routine console`, or run the script directly:
+
+```
+python3 ~/.claude/skills/routine/scripts/console.py
+```
+
+It writes `console.html` in your routines home, prints the path and opens the page in your browser. The page is a snapshot. It changes nothing, and you can delete the file at any time. It shows:
+
+- A status table with one row per routine: name, status, last run, flag and summary. Flagged routines come first.
+- For each routine: its six frontmatter fields, the text of `ROUTINE.md`, `notes.md` and the newest five run records.
+- The time the page was made and the path of each `ROUTINE.md`.
+
+To change a setting without opening the file, type `/routine console edit`, or run:
+
+```
+python3 ~/.claude/skills/routine/scripts/console.py --serve
+```
+
+This writes the page, serves it on your Mac only and prints a URL. Open the URL, and each routine has a form. The URL holds a token that is new each time the server starts. The server stops by itself after 30 minutes without a request.
+
+The forms change six fields: `purpose`, `schedule`, `cadence_hours`, `weekdays_only`, `paused` and `runs_on`. You edit everything else as files: the Steps, `notes.md` and the run records. If `ROUTINE.md` changed after the page was loaded, the save is refused. Reload the page and try again.
+
+Two things the console does not do:
+
+- Pausing a routine in the console sets `paused: true` in its `ROUTINE.md`. It does not pause the task in Claude Desktop.
+- It does not answer a `needs-you` question. Answer it in the Claude session.
+
 ### The watchdog
 
 The watchdog runs the same check at 09:30 and 17:00 every day, even when Claude is closed. It posts one macOS notification that lists the flagged routines. Install it once:
@@ -216,7 +245,7 @@ launchctl bootout gui/$(id -u)/dev.routines.status
 rm ~/Library/LaunchAgents/dev.routines.status.plist
 ```
 
-The output goes to `~/Library/Logs/routines-status.log`. The watchdog expects the skill at `~/.claude/skills/routine`.
+The output goes to `~/Library/Logs/routines-status.log`. The watchdog expects the skill at `~/.claude/skills/routine`. Before each check it refreshes `console.html`; if you installed the watchdog before 0.2.0, remove it and install it again to get that.
 
 ## Everyday changes
 
@@ -225,6 +254,7 @@ The output goes to `~/Library/Logs/routines-status.log`. The watchdog expects th
 | Change what a routine does | Edit its `ROUTINE.md`. The next run uses it. |
 | Correct how it does something | Tell Claude during a run, or add a line to `notes.md`. |
 | Change when it runs | Edit the task in Claude Desktop. Update the `schedule` line to match. |
+| Change a setting in a form | `/routine console edit`, then use the form to change `schedule`, `cadence_hours` or `paused`. This changes the file. The task in Claude Desktop stays as it is. |
 | Run it now | `/routine run <name>` in any session, or Run now in Claude Desktop. |
 | Pass something to one run | `/routine run <name> <args>`, if the routine says what it accepts. |
 | Switch it off | Set `paused: true` and pause the Desktop task. |
@@ -234,6 +264,8 @@ The output goes to `~/Library/Logs/routines-status.log`. The watchdog expects th
 - Routines run only while Claude Desktop is open and the Mac is awake. After sleep, Desktop starts one catch-up run for the most recent missed time. A 09:00 routine can then start at 23:00. Claude checks the time and records that the run was a catch-up.
 - Nothing checks that the `schedule` line matches the task in Claude Desktop.
 - A tool that asks for permission every time stops an unattended run until you answer.
+- The console snapshot is as old as its last refresh: the last `/routine console`, the last save in the edit forms, or the last watchdog run.
+- Pausing a routine in the console sets `paused: true` in its `ROUTINE.md`. It does not pause the task in Claude Desktop.
 - If a tool or login is not available, the run is `failed` with the exact message. Claude does not use a different source and report as if nothing changed.
 - If a run dies before it writes its record, it is not visible until it shows as `OVERDUE`.
 - Some Claude Desktop behaviour has not been tested yet: answering from the phone, and what the next scheduled fire does while a run waits. The README's "First: the Desktop spike" section lists four checks to do once with a throwaway task.

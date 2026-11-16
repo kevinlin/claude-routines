@@ -2,7 +2,7 @@
 name: routine
 description: Run, create, save and check personal routines, the recurring jobs kept as markdown in ~/.routines (timesheet checks, morning briefings, weekly reviews, following a change to production). Use this skill whenever a prompt says "/routine ...", whenever a scheduled task's prompt is "/routine run <name>", when the user asks to turn the session they just did into something that repeats ("save this as a routine", "do this every Friday"), asks for a new recurring job, or asks whether their routines ran, which failed, or what is waiting on them. Use it even if they say "automation" or "scheduled task" instead of "routine".
 metadata:
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Routine
@@ -13,6 +13,7 @@ Routines live as plain files so the owner can read and change every one of them:
 
 ```
 ~/.routines/               (or $ROUTINES_HOME)
+  console.html             generated snapshot of every routine (safe to delete)
   <name>/
     ROUTINE.md             the instructions; the source of truth
     notes.md               memory: preferences, corrections, facts from earlier runs
@@ -29,6 +30,8 @@ A scheduler (normally a Claude Desktop local scheduled task) only holds the poin
 | `/routine new <name>` | Interview the user briefly, then write the folder ("Creating a routine") |
 | `/routine save <name>` | Turn the work just done in this session into a routine ("Saving a session") |
 | `/routine status` | Run `python3 <this skill>/scripts/status.py` and relay the table, flagged rows first |
+| `/routine console` | Run `python3 <this skill>/scripts/console.py` and relay the path it prints |
+| `/routine console edit` | Run `python3 <this skill>/scripts/console.py --serve` in the background, because it keeps running. Relay the URL line it prints, and say it stops by itself after 30 minutes without a request |
 
 If the name is missing or unknown, list the folders in the routines home and ask which one.
 
@@ -124,9 +127,17 @@ Routines normally run as Claude Desktop local scheduled tasks, because they need
 
 Do not set a routine to bypass permissions to make it run unattended. The stops are how the owner stays in charge of what gets changed in their name.
 
+## Console
+
+`/routine console` writes `console.html` in the routines home and prints its path. The page is a snapshot of every routine: a status table with the flagged routines first, then for each routine its six frontmatter fields, the `ROUTINE.md` body, `notes.md` and the newest five run records. It also shows when it was generated and where each `ROUTINE.md` is. It has no forms and changes nothing.
+
+`/routine console edit` writes the same page, then serves it on 127.0.0.1 with a form for each routine. The URL it prints holds a token that is new each time the server starts. The server can change six frontmatter fields: `purpose`, `schedule`, `cadence_hours`, `weekdays_only`, `paused` and `runs_on`. Everything else is edited as a file.
+
+Pausing a routine in the console sets `paused: true` in its `ROUTINE.md`. It does not pause the task in Claude Desktop. A `needs-you` question is answered in the Claude session, not in the console.
+
 ## Watchdog
 
-On macOS, a launchd job can check the routines even when Claude was never opened. It runs `status.py --notify` at 09:30 and 17:00 without Claude, and posts one notification listing the flagged routines. It logs to `~/Library/Logs/routines-status.log`. It expects this skill at `~/.claude/skills/routine`.
+On macOS, a launchd job can check the routines even when Claude was never opened. At 09:30 and 17:00 it refreshes the console snapshot with `console.py --no-open`, then runs `status.py --notify` without Claude and posts one notification listing the flagged routines. The check runs even when the refresh fails. It logs to `~/Library/Logs/routines-status.log`. It expects this skill at `~/.claude/skills/routine`.
 
 Install it only when the user asks.
 
@@ -139,6 +150,8 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.routines.status.plis
 launchctl bootout gui/$(id -u)/dev.routines.status
 rm ~/Library/LaunchAgents/dev.routines.status.plist
 ```
+
+Someone who installed the watchdog before 0.2.0 has to reinstall it (remove, then install) to get the refresh.
 
 ## Things that go wrong
 

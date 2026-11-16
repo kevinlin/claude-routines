@@ -27,6 +27,7 @@ Routines live in `~/.routines/`, or in `$ROUTINES_HOME` when you set it. The fol
 
 ```
 ~/.routines/             or $ROUTINES_HOME
+  console.html           generated snapshot of every routine (safe to delete)
   <name>/ROUTINE.md      what the routine does; edit this to change it
   <name>/notes.md        what it has learned about your preferences
   <name>/runs/           one record per run: running, needs-you, done or failed
@@ -38,9 +39,11 @@ Routines live in `~/.routines/`, or in `$ROUTINES_HOME` when you set it. The fol
 |---|---|
 | Run one now | `/routine run <name>` in any Claude Code session |
 | See what needs me | `/routine status`, or `python3 ~/.claude/skills/routine/scripts/status.py` |
+| See everything in one page | `/routine console`, or `python3 ~/.claude/skills/routine/scripts/console.py` |
 | Make a job repeat | do it once by hand in a session, then `/routine save <name>` |
 | Start from a description | `/routine new <name>` |
 | Change a routine | edit its `ROUTINE.md`; the next run uses it |
+| Change a setting without opening the file | `/routine console edit`, or `python3 ~/.claude/skills/routine/scripts/console.py --serve`, then use the form for that routine |
 | Change when it runs | edit the task in Claude Desktop (the schedule is not in the file) |
 | Switch one off | set `paused: true` and pause the Desktop task |
 
@@ -79,13 +82,15 @@ launchctl bootout gui/$(id -u)/dev.routines.status
 rm ~/Library/LaunchAgents/dev.routines.status.plist
 ```
 
-The plist expects the skill at `~/.claude/skills/routine`. Output goes to `~/Library/Logs/routines-status.log`.
+The plist expects the skill at `~/.claude/skills/routine`. Output goes to `~/Library/Logs/routines-status.log`. Before each check it refreshes `console.html`; if you installed the watchdog before 0.2.0, remove it and install it again to get that.
 
 ## Limits
 
 - Routines run only while Claude Desktop is open and the Mac is awake. After sleep, Desktop starts one catch-up run for the most recent missed time.
 - The schedule lives in the Desktop app. The `schedule` line in a `ROUTINE.md` is a note, and nothing checks that the two agree.
 - Tools that insist on asking every time will stall an unattended run until answered.
+- The console snapshot is as old as its last refresh: the last `/routine console`, the last save in the edit forms, or the last watchdog run.
+- Pausing a routine in the console sets `paused: true` in its `ROUTINE.md`. It does not pause the task in Claude Desktop.
 
 ## This repo
 
@@ -94,7 +99,10 @@ skills/routine/SKILL.md                            the skill
 skills/routine/references/ROUTINE.template.md      the template for new routines
 skills/routine/scripts/status.py                   the health check
 skills/routine/scripts/test_status.py              its tests
+skills/routine/scripts/console.py                  the console page and its edit server
+skills/routine/scripts/test_console.py             its tests
 skills/routine/launchd/dev.routines.status.plist   the twice-daily watchdog
+tests/e2e/                                         acceptance tests
 docs/user-guide/                                   how to use the skill, with diagrams
 docs/specs/                                        design and implementation
 docs/product/                                      the decision that retired Flow Fabric
@@ -104,13 +112,19 @@ docs/product/                                      the decision that retired Flo
 
 ## Development
 
-Run the tests:
+Run the unit tests:
 
 ```
 cd skills/routine/scripts && python3 -m unittest
 ```
 
-CI runs them on macOS with the system Python 3.9.
+Run the acceptance tests from the repo root:
+
+```
+python3 -m unittest discover -s tests/e2e -v
+```
+
+CI runs both on macOS with the system Python 3.9 and with Python 3.13.
 
 ## License
 
