@@ -14,7 +14,7 @@ Design: [design_claude-routines.md](design_claude-routines.md). Status as of 202
 | 8 | One-week acceptance | Not started |
 | 9 | Re-point paths after the move | Done |
 | 10 | Skill repo and publish | Done |
-| 11 | Console (0.2.0) | In progress |
+| 11 | Console (0.2.0) | Done |
 
 ## 1. Desktop spike
 
@@ -94,12 +94,13 @@ The repo moved out of `~/routines` into a normal checkout. These still point at 
 
 Design: the "Console" section of the design doc.
 
-- `console.py` with `test_console.py`: the snapshot page, the edit server and the frontmatter writer.
-- `tests/e2e/`: an acceptance gate written from the CLI contract by someone who has not seen the implementation. Stdlib `unittest`, driving the real CLI as a subprocess and the real server over HTTP.
-- Skill, README, user guide, CHANGELOG and version 0.2.0. The watchdog plist refreshes the snapshot before the check.
-- CI runs the e2e suite next to the unit tests.
-- Verify:
-  - unit and e2e suites on `/usr/bin/python3` and python3.13
+- Done 2026-11-17: `console.py` with `test_console.py` (113 unit tests), the folder listing extracted in `status.py`, and `tests/e2e/` with 70 scenarios written from the contract without sight of the implementation.
+- Done: skill text, README, user guide, CHANGELOG and version 0.2.0. The watchdog plist refreshes the snapshot before the check, and CI runs both suites on the system Python and on 3.13.
+- Verified 2026-11-17: both suites on `/usr/bin/python3` 3.9.6 and python3.13; each server guard removed in a throwaway copy fails a test; an independent run of the gate passed on the release commit; a save through the real form in Chrome changed only the edited lines; the reinstalled watchdog exited 0 and rewrote `console.html`; `/routine console` printed the path in a fresh session.
+- Found in review and fixed before release: a POST body shorter than its declared length was written. It is now refused.
+- Not done: the console does not check config, and nothing reads the Desktop task.
+- Rerun:
+  - `cd skills/routine/scripts && python3 -m unittest`, and `python3 -m unittest discover -s tests/e2e` from the repo root
   - `console.py --no-open` lists the same routines as `status.py`, and `status.py` ignores `console.html`
   - in a browser with a throwaway home: the snapshot and the served page in light and dark, a `paused` round trip that keeps the body, a 409 on a stale form, a 403 without the token and on a foreign `Host`
   - after reinstalling the plist, `launchctl kickstart` exits 0, the log shows the table and `console.html` is fresh
