@@ -151,8 +151,6 @@ launchctl bootout gui/$(id -u)/dev.routines.status
 rm ~/Library/LaunchAgents/dev.routines.status.plist
 ```
 
-Someone who installed the watchdog before 0.2.0 has to reinstall it (remove, then install) to get the refresh.
-
 ## Things that go wrong
 
 - **The run started late.** Desktop runs one catch-up run after sleep, so a 09:00 routine can start at 23:00. Check the time before doing anything date-sensitive and say in the record that it was a catch-up.
